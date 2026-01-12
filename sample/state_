@@ -1,0 +1,13 @@
+{
+    "cablemodem": {
+        "bootFilename": "F3896LG_cm_res008_nowifi_v4.bin",
+        "docsisVersion": "3.1",
+        "macAddress": "8C:9A:8F:57:77:30",
+        "serialNumber": "YBES51534445",
+        "upTime": 238208,
+        "accessAllowed": true,
+        "status": "operational",
+        "maxCPEs": 10,
+        "baselinePrivacyEnabled": true
+    }
+}

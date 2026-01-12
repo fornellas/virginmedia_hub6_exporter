@@ -1,0 +1,14 @@
+{
+    "channel": {
+        "channelType": "sc_qam",
+        "channelId": 13,
+        "frequency": 482000000,
+        "power": 7.1,
+        "modulation": "qam_256",
+        "snr": 41,
+        "rxMer": 41,
+        "correctedErrors": 19,
+        "uncorrectedErrors": 0,
+        "lockStatus": true
+    }
+}

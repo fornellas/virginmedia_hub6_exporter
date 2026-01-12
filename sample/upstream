@@ -1,0 +1,97 @@
+{
+    "upstream": {
+        "channels": [
+            {
+                "channelId": 9,
+                "frequency": 25000000,
+                "lockStatus": true,
+                "power": 43.3,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 0,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            },
+            {
+                "channelId": 10,
+                "frequency": 31400000,
+                "lockStatus": true,
+                "power": 45,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 1,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            },
+            {
+                "channelId": 11,
+                "frequency": 37800000,
+                "lockStatus": true,
+                "power": 44,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 0,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            },
+            {
+                "channelId": 12,
+                "frequency": 44200000,
+                "lockStatus": true,
+                "power": 45,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 0,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            },
+            {
+                "channelId": 13,
+                "frequency": 50600000,
+                "lockStatus": true,
+                "power": 46,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 0,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            },
+            {
+                "channelId": 14,
+                "frequency": 57000000,
+                "lockStatus": true,
+                "power": 46,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 1,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            },
+            {
+                "channelId": 15,
+                "frequency": 63400000,
+                "lockStatus": true,
+                "power": 46.8,
+                "symbolRate": 5120,
+                "modulation": "qam_64",
+                "t1Timeout": 0,
+                "t2Timeout": 0,
+                "t3Timeout": 0,
+                "t4Timeout": 0,
+                "channelType": "atdma"
+            }
+        ]
+    }
+}
