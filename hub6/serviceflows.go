@@ -21,7 +21,7 @@ type ServiceFlowItem struct {
 	ServiceFlows []ServiceFlow `json:"serviceFlow"`
 }
 
-// /rest/v1/cablemodem/serviceflows
+// GET http://${address}/rest/v1/cablemodem/serviceflows
 type ServiceFlows struct {
 	ServiceFlowItem `json:"serviceFlows"`
 }

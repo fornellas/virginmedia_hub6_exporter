@@ -29,6 +29,7 @@ type UpstreamItem struct {
 	Channels []UpstreamChannel `json:"channels"`
 }
 
+// GET http://${address}/rest/v1/cablemodem/upstream
 type Upstream struct {
 	UpstreamItem UpstreamItem `json:"upstream"`
 }

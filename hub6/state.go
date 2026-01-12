@@ -18,7 +18,7 @@ type CableModem struct {
 	BaselinePrivacyEnabled bool `json:"baselinePrivacyEnabled"`
 }
 
-// /rest/v1/cablemodem/state_
+// GET http://${address}/rest/v1/cablemodem/state_
 type State struct {
 	CableModem CableModem `json:"cablemodem"`
 }

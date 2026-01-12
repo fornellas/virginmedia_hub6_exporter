@@ -1,5 +1,5 @@
-http://192.168.100.1/rest/v1/cablemodem/state_
-http://192.168.100.1/rest/v1/cablemodem/downstream/primary_
-http://192.168.100.1/rest/v1/cablemodem/upstream
-http://192.168.100.1/rest/v1/cablemodem/downstream
-http://192.168.100.1/rest/v1/cablemodem/serviceflows
+http://${address}/rest/v1/cablemodem/state_
+http://${address}/rest/v1/cablemodem/downstream/primary_
+http://${address}/rest/v1/cablemodem/upstream
+http://${address}/rest/v1/cablemodem/downstream
+http://${address}/rest/v1/cablemodem/serviceflows

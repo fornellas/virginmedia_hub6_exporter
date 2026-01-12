@@ -27,6 +27,7 @@ type DownstreamItem struct {
 	DownstreamChannels []DownstreamChannel `json:"channels"`
 }
 
+// http://${address}/rest/v1/cablemodem/downstream
 type Downstream struct {
 	DownstreamItem DownstreamItem `json:"downstream"`
 }
