@@ -4,7 +4,7 @@ package exporter
 type ServiceFlow struct {
 	// SFID
 	ServiceFlowId uint64 `json:"serviceFlowId"`
-	Direction string `json:"direction"`
+	Direction     string `json:"direction"`
 	// Max Traffic Rate (bps)
 	MaxTrafficRate uint64 `json:"maxTrafficRate"`
 	// Max Traffic Burst (bytes)
@@ -18,8 +18,10 @@ type ServiceFlow struct {
 }
 
 type ServiceFlowItem struct {
-	ServiceFlow ServiceFlow `json:"serviceFlow"`
+	ServiceFlows []ServiceFlow `json:"serviceFlow"`
 }
 
 // /rest/v1/cablemodem/serviceflows
-type ServiceFlows []ServiceFlowItem `json:"serviceFlows"`
+type ServiceFlows struct {
+	ServiceFlowItem `json:"serviceFlows"`
+}

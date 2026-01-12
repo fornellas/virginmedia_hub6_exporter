@@ -1,11 +1,11 @@
 package exporter
 
-type Channel struct {
+type UpstreamChannel struct {
 	// Channel ID
 	ChannelId uint64 `json:"channelId"`
 	// Frequency (Hz)
-	Frequency uint64 `json:"frequency"`
-	LockStatus bool `json:"lockStatus"`
+	Frequency  uint64 `json:"frequency"`
+	LockStatus bool   `json:"lockStatus"`
 	// Power (dBmV)
 	Power float64 `json:"power"`
 	// Symbol Rate (ksps)
@@ -24,11 +24,11 @@ type Channel struct {
 	ChannelType string `json:"channelType"`
 }
 
-type Channels struct {
+type UpstreamItem struct {
 	// 3.0 Upstream channels
-	Channels []Channel `json:"channels"`
+	Channels []UpstreamChannel `json:"channels"`
 }
 
 type Upstream struct {
-	Channels Channels `json:"upstream"`
+	UpstreamItem UpstreamItem `json:"upstream"`
 }
