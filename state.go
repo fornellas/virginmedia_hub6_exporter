@@ -1,6 +1,5 @@
 package exporter
 
-
 // General Configuration
 type CableModem struct {
 	// Config file
