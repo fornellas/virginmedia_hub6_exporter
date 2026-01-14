@@ -17,6 +17,7 @@ tool (
 
 require (
 	github.com/fornellas/slogxt v1.2.0
+	github.com/prometheus/client_golang v1.16.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -25,19 +26,25 @@ require (
 require (
 	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.8.1 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/client9/misspell v0.3.4 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fornellas/rrb v0.2.7 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gordonklaus/ineffassign v0.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jandelgado/gcov2lcov v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
+	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rakyll/gotest v0.0.7 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
@@ -62,6 +69,7 @@ require (
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	golang.org/x/vuln v1.1.4 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 )
