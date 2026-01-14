@@ -43,6 +43,8 @@ type HubExporter struct {
 	descServiceMinReservedRate *prometheus.Desc
 	descServiceMaxConcatBurst  *prometheus.Desc
 
+	descCableInfo            *prometheus.Desc
+	descCableStatus          *prometheus.Desc
 	descCableUptimeSeconds   *prometheus.Desc
 	descCableAccessAllowed   *prometheus.Desc
 	descCableMaxCPEs         *prometheus.Desc
@@ -164,25 +166,35 @@ func NewHubExporter(address string, timeout time.Duration) *HubExporter {
 			labelsSF, nil,
 		),
 
+		descCableInfo: prometheus.NewDesc(
+			"virginmedia_hub6_info",
+			"Cable modem info labels (value is always 1)",
+			[]string{"boot_filename", "docsis_version", "mac_address", "serial_number"}, nil,
+		),
+		descCableStatus: prometheus.NewDesc(
+			"virginmedia_hub6_status",
+			"Cable modem status (value 1 with status label)",
+			[]string{"status", "serial_number"}, nil,
+		),
 		descCableUptimeSeconds: prometheus.NewDesc(
-			"virginmedia_hub6_cablemodem_uptime_seconds",
+			"virginmedia_hub6_uptime_seconds",
 			"Cable modem uptime in seconds",
-			nil, nil,
+			[]string{"serial_number"}, nil,
 		),
 		descCableAccessAllowed: prometheus.NewDesc(
-			"virginmedia_hub6_cablemodem_access_allowed",
+			"virginmedia_hub6_access_allowed",
 			"Cable modem access allowed (1 = allowed, 0 = not allowed)",
-			nil, nil,
+			[]string{"serial_number"}, nil,
 		),
 		descCableMaxCPEs: prometheus.NewDesc(
-			"virginmedia_hub6_cablemodem_max_cpes",
+			"virginmedia_hub6_max_cpes",
 			"Cable modem maximum CPEs",
-			nil, nil,
+			[]string{"serial_number"}, nil,
 		),
 		descCableBaselinePrivacy: prometheus.NewDesc(
-			"virginmedia_hub6_cablemodem_baseline_privacy_enabled",
+			"virginmedia_hub6_baseline_privacy_enabled",
 			"Cable modem baseline privacy enabled (1 = enabled, 0 = disabled)",
-			nil, nil,
+			[]string{"serial_number"}, nil,
 		),
 
 		// per-endpoint up metrics
@@ -233,7 +245,9 @@ func (e *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.descServiceMinReservedRate
 	ch <- e.descServiceMaxConcatBurst
 
+	ch <- e.descCableInfo
 	ch <- e.descCableUptimeSeconds
+	ch <- e.descCableStatus
 	ch <- e.descCableAccessAllowed
 	ch <- e.descCableMaxCPEs
 	ch <- e.descCableBaselinePrivacy
@@ -313,18 +327,47 @@ func (e *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	stUp := 0.0
 	if st, err := e.fetchState(ctx); err == nil {
 		stUp = 1.0
-		ch <- prometheus.MustNewConstMetric(e.descCableUptimeSeconds, prometheus.GaugeValue, float64(st.CableModem.UpTime))
+		serial := st.CableModem.SerialNumber
+
+		// info metric (value 1) with identifying labels
+		ch <- prometheus.MustNewConstMetric(
+			e.descCableInfo,
+			prometheus.GaugeValue,
+			1.0,
+			st.CableModem.BootFilename,
+			st.CableModem.DocsisVersion,
+			st.CableModem.MacAddress,
+			serial,
+		)
+
+		// status metric: expose the status as a label with value 1
+		ch <- prometheus.MustNewConstMetric(
+			e.descCableStatus,
+			prometheus.GaugeValue,
+			1.0,
+			st.CableModem.Status,
+			serial,
+		)
+
+		// uptime with serial label
+		ch <- prometheus.MustNewConstMetric(e.descCableUptimeSeconds, prometheus.GaugeValue, float64(st.CableModem.UpTime), serial)
+
+		// access allowed as 1/0 with serial label
 		access := 0.0
 		if st.CableModem.AccessAllowed {
 			access = 1.0
 		}
-		ch <- prometheus.MustNewConstMetric(e.descCableAccessAllowed, prometheus.GaugeValue, access)
-		ch <- prometheus.MustNewConstMetric(e.descCableMaxCPEs, prometheus.GaugeValue, float64(st.CableModem.MaxCpEs))
+		ch <- prometheus.MustNewConstMetric(e.descCableAccessAllowed, prometheus.GaugeValue, access, serial)
+
+		// max CPEs with serial label
+		ch <- prometheus.MustNewConstMetric(e.descCableMaxCPEs, prometheus.GaugeValue, float64(st.CableModem.MaxCpEs), serial)
+
+		// baseline privacy enabled as 1/0 with serial label
 		privacy := 0.0
 		if st.CableModem.BaselinePrivacyEnabled {
 			privacy = 1.0
 		}
-		ch <- prometheus.MustNewConstMetric(e.descCableBaselinePrivacy, prometheus.GaugeValue, privacy)
+		ch <- prometheus.MustNewConstMetric(e.descCableBaselinePrivacy, prometheus.GaugeValue, privacy, serial)
 	}
 	// emit state up metric
 	ch <- prometheus.MustNewConstMetric(e.descStateUp, prometheus.GaugeValue, stUp)
@@ -394,7 +437,7 @@ func (e *HubExporter) fetchServiceFlows(ctx context.Context) (*hub6.ServiceFlows
 
 func (e *HubExporter) fetchState(ctx context.Context) (*hub6.State, error) {
 	var st hub6.State
-	if err := e.fetch(ctx, "/rest/v1/cablemodem/state", &st); err != nil {
+	if err := e.fetch(ctx, "/rest/v1/cablemodem/state_", &st); err != nil {
 		return nil, err
 	}
 	return &st, nil
