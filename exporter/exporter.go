@@ -174,27 +174,27 @@ func NewHubExporter(address string, timeout time.Duration) *HubExporter {
 		descCableStatus: prometheus.NewDesc(
 			"virginmedia_hub6_status",
 			"Cable modem status (value 1 with status label)",
-			[]string{"status", "serial_number"}, nil,
+			[]string{"status"}, nil,
 		),
 		descCableUptimeSeconds: prometheus.NewDesc(
 			"virginmedia_hub6_uptime_seconds",
 			"Cable modem uptime in seconds",
-			[]string{"serial_number"}, nil,
+			[]string{}, nil,
 		),
 		descCableAccessAllowed: prometheus.NewDesc(
 			"virginmedia_hub6_access_allowed",
 			"Cable modem access allowed (1 = allowed, 0 = not allowed)",
-			[]string{"serial_number"}, nil,
+			[]string{}, nil,
 		),
 		descCableMaxCPEs: prometheus.NewDesc(
 			"virginmedia_hub6_max_cpes",
 			"Cable modem maximum CPEs",
-			[]string{"serial_number"}, nil,
+			[]string{}, nil,
 		),
 		descCableBaselinePrivacy: prometheus.NewDesc(
 			"virginmedia_hub6_baseline_privacy_enabled",
 			"Cable modem baseline privacy enabled (1 = enabled, 0 = disabled)",
-			[]string{"serial_number"}, nil,
+			[]string{}, nil,
 		),
 
 		// per-endpoint up metrics
@@ -327,7 +327,6 @@ func (e *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	stUp := 0.0
 	if st, err := e.fetchState(ctx); err == nil {
 		stUp = 1.0
-		serial := st.CableModem.SerialNumber
 
 		// info metric (value 1) with identifying labels
 		ch <- prometheus.MustNewConstMetric(
@@ -337,7 +336,7 @@ func (e *HubExporter) Collect(ch chan<- prometheus.Metric) {
 			st.CableModem.BootFilename,
 			st.CableModem.DocsisVersion,
 			st.CableModem.MacAddress,
-			serial,
+			st.CableModem.SerialNumber,
 		)
 
 		// status metric: expose the status as a label with value 1
@@ -346,28 +345,27 @@ func (e *HubExporter) Collect(ch chan<- prometheus.Metric) {
 			prometheus.GaugeValue,
 			1.0,
 			st.CableModem.Status,
-			serial,
 		)
 
-		// uptime with serial label
-		ch <- prometheus.MustNewConstMetric(e.descCableUptimeSeconds, prometheus.GaugeValue, float64(st.CableModem.UpTime), serial)
+		// uptime
+		ch <- prometheus.MustNewConstMetric(e.descCableUptimeSeconds, prometheus.GaugeValue, float64(st.CableModem.UpTime))
 
-		// access allowed as 1/0 with serial label
+		// access allowed as 1/0
 		access := 0.0
 		if st.CableModem.AccessAllowed {
 			access = 1.0
 		}
-		ch <- prometheus.MustNewConstMetric(e.descCableAccessAllowed, prometheus.GaugeValue, access, serial)
+		ch <- prometheus.MustNewConstMetric(e.descCableAccessAllowed, prometheus.GaugeValue, access)
 
-		// max CPEs with serial label
-		ch <- prometheus.MustNewConstMetric(e.descCableMaxCPEs, prometheus.GaugeValue, float64(st.CableModem.MaxCpEs), serial)
+		// max CPEs
+		ch <- prometheus.MustNewConstMetric(e.descCableMaxCPEs, prometheus.GaugeValue, float64(st.CableModem.MaxCpEs))
 
-		// baseline privacy enabled as 1/0 with serial label
+		// baseline privacy enabled as 1/0
 		privacy := 0.0
 		if st.CableModem.BaselinePrivacyEnabled {
 			privacy = 1.0
 		}
-		ch <- prometheus.MustNewConstMetric(e.descCableBaselinePrivacy, prometheus.GaugeValue, privacy, serial)
+		ch <- prometheus.MustNewConstMetric(e.descCableBaselinePrivacy, prometheus.GaugeValue, privacy)
 	}
 	// emit state up metric
 	ch <- prometheus.MustNewConstMetric(e.descStateUp, prometheus.GaugeValue, stUp)
