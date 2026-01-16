@@ -373,7 +373,7 @@ func (e *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(e.descStateUp, prometheus.GaugeValue, stUp)
 }
 
-func (e *HubExporter) fetch(ctx context.Context, path string, out interface{}) error {
+func (e *HubExporter) fetch(ctx context.Context, path string, out any) error {
 	url := fmt.Sprintf("http://%s%s", e.address, path)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
