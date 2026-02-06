@@ -18,10 +18,10 @@ type ServiceFlow struct {
 }
 
 type ServiceFlowItem struct {
-	ServiceFlows []ServiceFlow `json:"serviceFlow"`
+	ServiceFlow ServiceFlow `json:"serviceFlow"`
 }
 
 // GET http://${address}/rest/v1/cablemodem/serviceflows
 type ServiceFlows struct {
-	ServiceFlowItem `json:"serviceFlows"`
+	ServiceFlowItems []ServiceFlowItem `json:"serviceFlows"`
 }

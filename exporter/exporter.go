@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/fornellas/slogxt/log"
 
@@ -29,6 +30,13 @@ type HubExporter struct {
 	descStateBaselinePrivacyEnabled *prometheus.Desc
 	descStateUp                     *prometheus.Desc
 
+	// GET http://${address}/rest/v1/cablemodem/serviceflows
+	descServiceFlowMaxTrafficRate  *prometheus.Desc
+	descServiceFlowMaxTrafficBurst *prometheus.Desc
+	descServiceFlowMinReservedRate *prometheus.Desc
+	descServiceFlowMaxConcatBurst  *prometheus.Desc
+	descServiceFlowsUp             *prometheus.Desc
+
 	// Descriptors
 	// descDownstreamPower       *prometheus.Desc
 	// descDownstreamSnr         *prometheus.Desc
@@ -47,15 +55,9 @@ type HubExporter struct {
 	// descUpstreamT3          *prometheus.Desc
 	// descUpstreamT4          *prometheus.Desc
 
-	// descServiceMaxTrafficRate  *prometheus.Desc
-	// descServiceMaxTrafficBurst *prometheus.Desc
-	// descServiceMinReservedRate *prometheus.Desc
-	// descServiceMaxConcatBurst  *prometheus.Desc
-
 	// Per-endpoint up metrics (1 = endpoint scraped successfully, 0 = failure)
 	// descDownstreamUp   *prometheus.Desc
 	// descUpstreamUp     *prometheus.Desc
-	// descServiceFlowsUp *prometheus.Desc
 
 }
 
@@ -66,7 +68,7 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 
 	// labelsDS := []string{"channel_id", "channel_type", "modulation"}
 	// labelsUS := []string{"channel_id", "channel_type", "modulation"}
-	// labelsSF := []string{"serviceflow_id", "direction", "schedule_type"}
+	serviceFlowLabels := []string{"serviceflow_id", "direction", "schedule_type"}
 
 	return &HubExporter{
 		ctx:     ctx,
@@ -107,6 +109,33 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		descStateUp: prometheus.NewDesc(
 			"virginmedia_hub6_state_up",
 			"Whether the state endpoint was scraped successfully (1 = up, 0 = down)",
+			nil, nil,
+		),
+
+		// GET http://${address}/rest/v1/cablemodem/serviceflows
+		descServiceFlowMaxTrafficRate: prometheus.NewDesc(
+			"virginmedia_hub6_serviceflow_max_traffic_rate_bps",
+			"ServiceFlow max traffic rate in bps",
+			serviceFlowLabels, nil,
+		),
+		descServiceFlowMaxTrafficBurst: prometheus.NewDesc(
+			"virginmedia_hub6_serviceflow_max_traffic_burst_bytes",
+			"ServiceFlow max traffic burst in bytes",
+			serviceFlowLabels, nil,
+		),
+		descServiceFlowMinReservedRate: prometheus.NewDesc(
+			"virginmedia_hub6_serviceflow_min_reserved_rate_bps",
+			"ServiceFlow min reserved rate in bps",
+			serviceFlowLabels, nil,
+		),
+		descServiceFlowMaxConcatBurst: prometheus.NewDesc(
+			"virginmedia_hub6_serviceflow_max_concatenated_burst_bytes",
+			"ServiceFlow max concatenated burst in bytes",
+			serviceFlowLabels, nil,
+		),
+		descServiceFlowsUp: prometheus.NewDesc(
+			"virginmedia_hub6_serviceflows_up",
+			"Whether the serviceflows endpoint was scraped successfully (1 = up, 0 = down)",
 			nil, nil,
 		),
 
@@ -187,26 +216,6 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		// 	labelsUS, nil,
 		// ),
 
-		// descServiceMaxTrafficRate: prometheus.NewDesc(
-		// 	"virginmedia_hub6_serviceflow_max_traffic_rate_bps",
-		// 	"ServiceFlow max traffic rate in bps",
-		// 	labelsSF, nil,
-		// ),
-		// descServiceMaxTrafficBurst: prometheus.NewDesc(
-		// 	"virginmedia_hub6_serviceflow_max_traffic_burst_bytes",
-		// 	"ServiceFlow max traffic burst in bytes",
-		// 	labelsSF, nil,
-		// ),
-		// descServiceMinReservedRate: prometheus.NewDesc(
-		// 	"virginmedia_hub6_serviceflow_min_reserved_rate_bps",
-		// 	"ServiceFlow min reserved rate in bps",
-		// 	labelsSF, nil,
-		// ),
-		// descServiceMaxConcatBurst: prometheus.NewDesc(
-		// 	"virginmedia_hub6_serviceflow_max_concatenated_burst_bytes",
-		// 	"ServiceFlow max concatenated burst in bytes",
-		// 	labelsSF, nil,
-		// ),
 		// // per-endpoint up metrics
 		// descDownstreamUp: prometheus.NewDesc(
 		// 	"virginmedia_hub6_downstream_up",
@@ -216,11 +225,6 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		// descUpstreamUp: prometheus.NewDesc(
 		// 	"virginmedia_hub6_upstream_up",
 		// 	"Whether the upstream endpoint was scraped successfully (1 = up, 0 = down)",
-		// 	nil, nil,
-		// ),
-		// descServiceFlowsUp: prometheus.NewDesc(
-		// 	"virginmedia_hub6_serviceflows_up",
-		// 	"Whether the serviceflows endpoint was scraped successfully (1 = up, 0 = down)",
 		// 	nil, nil,
 		// ),
 	}
@@ -236,38 +240,45 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- h.descStateMaxCPEs
 	ch <- h.descStateBaselinePrivacyEnabled
 
-	// ch <- e.descDownstreamPower
-	// ch <- e.descDownstreamSnr
-	// ch <- e.descDownstreamRxMer
-	// ch <- e.descDownstreamCorrected
-	// ch <- e.descDownstreamUncorrected
-	// ch <- e.descDownstreamLockStatus
-	// ch <- e.descDownstreamFrequencyHz
+	// GET http://${address}/rest/v1/cablemodem/serviceflows
+	ch <- h.descServiceFlowMaxTrafficRate
+	ch <- h.descServiceFlowMaxTrafficBurst
+	ch <- h.descServiceFlowMinReservedRate
+	ch <- h.descServiceFlowMaxConcatBurst
+	ch <- h.descServiceFlowsUp
 
-	// ch <- e.descUpstreamPower
-	// ch <- e.descUpstreamSymbolRate
-	// ch <- e.descUpstreamLockStatus
-	// ch <- e.descUpstreamFrequencyHz
-	// ch <- e.descUpstreamT1
-	// ch <- e.descUpstreamT2
-	// ch <- e.descUpstreamT3
-	// ch <- e.descUpstreamT4
+	// ch <- h.descDownstreamPower
+	// ch <- h.descDownstreamSnr
+	// ch <- h.descDownstreamRxMer
+	// ch <- h.descDownstreamCorrected
+	// ch <- h.descDownstreamUncorrected
+	// ch <- h.descDownstreamLockStatus
+	// ch <- h.descDownstreamFrequencyHz
 
-	// ch <- e.descServiceMaxTrafficRate
-	// ch <- e.descServiceMaxTrafficBurst
-	// ch <- e.descServiceMinReservedRate
-	// ch <- e.descServiceMaxConcatBurst
+	// ch <- h.descUpstreamPower
+	// ch <- h.descUpstreamSymbolRate
+	// ch <- h.descUpstreamLockStatus
+	// ch <- h.descUpstreamFrequencyHz
+	// ch <- h.descUpstreamT1
+	// ch <- h.descUpstreamT2
+	// ch <- h.descUpstreamT3
+	// ch <- h.descUpstreamT4
+
+	// ch <- h.descServiceMaxTrafficRate
+	// ch <- h.descServiceMaxTrafficBurst
+	// ch <- h.descServiceMinReservedRate
+	// ch <- h.descServiceMaxConcatBurst
 
 	// // describe per-endpoint up metrics
-	// ch <- e.descDownstreamUp
-	// ch <- e.descUpstreamUp
-	// ch <- e.descServiceFlowsUp
-	// ch <- e.descStateUp
+	// ch <- h.descDownstreamUp
+	// ch <- h.descUpstreamUp
+
+	// ch <- h.descStateUp
 }
 
-func (h *HubExporter) get(ctx context.Context, path string, out any) (err error) {
+func (h *HubExporter) get(path string, out any) (err error) {
 	url := fmt.Sprintf("http://%s%s", h.address, path)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(h.ctx, "GET", url, nil)
 	if err != nil {
 		return
 	}
@@ -291,33 +302,33 @@ func (h *HubExporter) get(ctx context.Context, path string, out any) (err error)
 func (h *HubExporter) collectState(ch chan<- prometheus.Metric) {
 	logger := log.MustLogger(h.ctx)
 
-	stateUp := 0.0
+	up := 0.0
 
-	var st hub6.State
+	var state hub6.State
 	path := "/rest/v1/cablemodem/state_"
-	if err := h.get(h.ctx, path, &st); err != nil {
+	if err := h.get(path, &state); err != nil {
 		logger.Error("failed to fetch state", "err", err)
 	} else {
-		stateUp = 1.0
+		up = 1.0
 
 		ch <- prometheus.MustNewConstMetric(
 			h.descStateInfo,
 			prometheus.GaugeValue,
 			1.0,
-			st.CableModem.BootFilename,
-			st.CableModem.DocsisVersion,
-			st.CableModem.MacAddress,
-			st.CableModem.SerialNumber,
+			state.CableModem.BootFilename,
+			state.CableModem.DocsisVersion,
+			state.CableModem.MacAddress,
+			state.CableModem.SerialNumber,
 		)
 
 		ch <- prometheus.MustNewConstMetric(
 			h.descStateUptime,
 			prometheus.GaugeValue,
-			float64(st.CableModem.UpTime),
+			float64(state.CableModem.UpTime),
 		)
 
 		access := 0.0
-		if st.CableModem.AccessAllowed {
+		if state.CableModem.AccessAllowed {
 			access = 1.0
 		}
 		ch <- prometheus.MustNewConstMetric(
@@ -329,27 +340,71 @@ func (h *HubExporter) collectState(ch chan<- prometheus.Metric) {
 			h.descStateStatus,
 			prometheus.GaugeValue,
 			1.0,
-			st.CableModem.Status,
+			state.CableModem.Status,
 		)
 
 		ch <- prometheus.MustNewConstMetric(
 			h.descStateMaxCPEs,
 			prometheus.GaugeValue,
-			float64(st.CableModem.MaxCpEs),
+			float64(state.CableModem.MaxCpEs),
 		)
 
 		privacy := 0.0
-		if st.CableModem.BaselinePrivacyEnabled {
+		if state.CableModem.BaselinePrivacyEnabled {
 			privacy = 1.0
 		}
 		ch <- prometheus.MustNewConstMetric(h.descStateBaselinePrivacyEnabled, prometheus.GaugeValue, privacy)
 	}
-	ch <- prometheus.MustNewConstMetric(h.descStateUp, prometheus.GaugeValue, stateUp)
+
+	ch <- prometheus.MustNewConstMetric(h.descStateUp, prometheus.GaugeValue, up)
+}
+
+// GET http://${address}/rest/v1/cablemodem/serviceflows
+func (h *HubExporter) collectServiceFlows(ch chan<- prometheus.Metric) {
+	logger := log.MustLogger(h.ctx)
+
+	up := 0.0
+
+	var serviceFlows hub6.ServiceFlows
+	if err := h.get("/rest/v1/cablemodem/serviceflows", &serviceFlows); err != nil {
+		logger.Error("failed to fetch service flows", "err", err)
+	} else {
+		for _, serviceFlowItem := range serviceFlows.ServiceFlowItems {
+			labels := []string{strconv.FormatUint(serviceFlowItem.ServiceFlow.ServiceFlowId, 10), serviceFlowItem.ServiceFlow.Direction, serviceFlowItem.ServiceFlow.ScheduleType}
+			ch <- prometheus.MustNewConstMetric(
+				h.descServiceFlowMaxTrafficRate,
+				prometheus.GaugeValue,
+				float64(serviceFlowItem.ServiceFlow.MaxTrafficRate),
+				labels...,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descServiceFlowMaxTrafficBurst,
+				prometheus.GaugeValue,
+				float64(serviceFlowItem.ServiceFlow.MaxTrafficBurst),
+				labels...,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descServiceFlowMinReservedRate,
+				prometheus.GaugeValue,
+				float64(serviceFlowItem.ServiceFlow.MinReservedRate),
+				labels...,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descServiceFlowMaxConcatBurst,
+				prometheus.GaugeValue,
+				float64(serviceFlowItem.ServiceFlow.MaxConcatenatedBurst),
+				labels...,
+			)
+		}
+	}
+
+	ch <- prometheus.MustNewConstMetric(h.descServiceFlowsUp, prometheus.GaugeValue, up)
 }
 
 // Collect fetches the current state from the Hub and exports metrics.
 func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	h.collectState(ch)
+	h.collectServiceFlows(ch)
 
 	// // Downstream
 	// dsUp := 0.0
@@ -396,20 +451,6 @@ func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	// // emit upstream up metric
 	// ch <- prometheus.MustNewConstMetric(e.descUpstreamUp, prometheus.GaugeValue, usUp)
 
-	// // Service Flows
-	// sfUp := 0.0
-	// if sf, err := e.fetchServiceFlows(ctx); err == nil {
-	// 	sfUp = 1.0
-	// 	for _, s := range sf.ServiceFlowItem.ServiceFlows {
-	// 		labels := []string{strconv.FormatUint(s.ServiceFlowId, 10), s.Direction, s.ScheduleType}
-	// 		ch <- prometheus.MustNewConstMetric(e.descServiceMaxTrafficRate, prometheus.GaugeValue, float64(s.MaxTrafficRate), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descServiceMaxTrafficBurst, prometheus.GaugeValue, float64(s.MaxTrafficBurst), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descServiceMinReservedRate, prometheus.GaugeValue, float64(s.MinReservedRate), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descServiceMaxConcatBurst, prometheus.GaugeValue, float64(s.MaxConcatenatedBurst), labels...)
-	// 	}
-	// }
-	// // emit serviceflows up metric
-	// ch <- prometheus.MustNewConstMetric(e.descServiceFlowsUp, prometheus.GaugeValue, sfUp)
 }
 
 // func (e *HubExporter) fetchDownstream(ctx context.Context) (*hub6.Downstream, error) {
@@ -426,12 +467,4 @@ func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
 // 		return nil, err
 // 	}
 // 	return &us, nil
-// }
-
-// func (e *HubExporter) fetchServiceFlows(ctx context.Context) (*hub6.ServiceFlows, error) {
-// 	var sf hub6.ServiceFlows
-// 	if err := e.fetch(ctx, "/rest/v1/cablemodem/serviceflows", &sf); err != nil {
-// 		return nil, err
-// 	}
-// 	return &sf, nil
 // }
