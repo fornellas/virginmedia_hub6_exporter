@@ -464,7 +464,7 @@ build: install-go go-generate
 		-o virginmedia_hub6_exporter.$(GOOS).$(GOARCH) \
 		$(GO_BUILD_FLAGS_COMMON) \
 		$(GO_BUILD_FLAGS) \
-		./cmd/
+		./cmd/virginmedia_hub6_exporter
 
 .PHONY: clean-build
 clean-build:
