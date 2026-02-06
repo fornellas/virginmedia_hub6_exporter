@@ -299,12 +299,15 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (h *HubExporter) get(path string, out any) (err error) {
+	logger := log.MustLogger(h.ctx)
+
 	url := fmt.Sprintf("http://%s%s", h.address, path)
 	req, err := http.NewRequestWithContext(h.ctx, "GET", url, nil)
 	if err != nil {
 		return
 	}
 
+	logger.Info("Requesting", "request", req.URL)
 	resp, err := h.client.Do(req)
 	if err != nil {
 		return
