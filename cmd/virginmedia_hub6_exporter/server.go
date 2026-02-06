@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -24,7 +23,7 @@ var ServerCmd = &cobra.Command{
 
 		logger := log.MustLogger(ctx)
 
-		port, err := cmd.Flags().GetInt("port")
+		address, err := cmd.Flags().GetString("listen-address")
 		if err != nil {
 			return err
 		}
@@ -55,7 +54,6 @@ var ServerCmd = &cobra.Command{
 			handler.ServeHTTP(w, r)
 		})
 
-		address := fmt.Sprintf(":%d", port)
 		server := &http.Server{
 			Addr: address,
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +88,7 @@ var ServerCmd = &cobra.Command{
 }
 
 func init() {
-	ServerCmd.Flags().Int("port", 9188, "HTTP listen port for the exporter")
+	ServerCmd.Flags().String("listen-address", ":9188", "HTTP listen port for the exporter")
 	ServerCmd.Flags().Duration("http-client-timeout", 5*time.Second, "HTTP client timeount")
 
 	RootCmd.AddCommand(ServerCmd)
