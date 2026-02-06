@@ -5,12 +5,20 @@ type DownstreamChannel struct {
 	ChannelType string `json:"channelType"`
 	// Channel ID
 	ChannelId uint64 `json:"channelId"`
+	// Channel Width (Hz)
+	ChannelWidth uint64 `json:"channelWidth"`
+	// FFT Type
+	FFTType string `json:"fftType"`
+	// Number of Active Subcarriers
+	NumberOfActiveSubcarriers uint64 `json:"numberOfActiveSubCarriers"`
 	// Frequency (Hz)
 	Frequency uint64 `json:"frequency"`
 	// Power (dBmV)
 	Power float64 `json:"power"`
 	// Modulation
 	Modulation string `json:"modulation"`
+	// First Active Subcarrier (Hz)
+	FirstActiveSubcarrier uint64 `json:"firstActiveSubcarrier"`
 	// SNR (dB)
 	Snr uint64 `json:"snr"`
 	// RxMER (dB)
@@ -27,7 +35,7 @@ type DownstreamItem struct {
 	DownstreamChannels []DownstreamChannel `json:"channels"`
 }
 
-// http://${address}/rest/v1/cablemodem/downstream
+// GET http://${address}/rest/v1/cablemodem/downstream
 type Downstream struct {
 	DownstreamItem DownstreamItem `json:"downstream"`
 }
