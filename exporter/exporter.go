@@ -25,7 +25,6 @@ type HubExporter struct {
 	descStateInfo                   *prometheus.Desc
 	descStateUptime                 *prometheus.Desc
 	descStateAccessAllowed          *prometheus.Desc
-	descStateStatus                 *prometheus.Desc
 	descStateMaxCPEs                *prometheus.Desc
 	descStateBaselinePrivacyEnabled *prometheus.Desc
 	descStateUp                     *prometheus.Desc
@@ -79,7 +78,7 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		descStateInfo: prometheus.NewDesc(
 			"virginmedia_hub6_state_info",
 			"Cable modem info labels (value is always 1)",
-			[]string{"boot_filename", "docsis_version", "mac_address", "serial_number"}, nil,
+			[]string{"boot_filename", "docsis_version", "mac_address", "serial_number", "status"}, nil,
 		),
 		descStateUptime: prometheus.NewDesc(
 			"virginmedia_hub6_state_uptime_seconds",
@@ -90,11 +89,6 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 			"virginmedia_hub6_state_access_allowed",
 			"Cable modem access allowed (1 = allowed, 0 = not allowed)",
 			[]string{}, nil,
-		),
-		descStateStatus: prometheus.NewDesc(
-			"virginmedia_hub6_state_status",
-			"Cable modem status (value 1 with status label)",
-			[]string{"status"}, nil,
 		),
 		descStateMaxCPEs: prometheus.NewDesc(
 			"virginmedia_hub6_state_max_cpes",
@@ -236,7 +230,6 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- h.descStateInfo
 	ch <- h.descStateUptime
 	ch <- h.descStateAccessAllowed
-	ch <- h.descStateStatus
 	ch <- h.descStateMaxCPEs
 	ch <- h.descStateBaselinePrivacyEnabled
 
@@ -319,6 +312,7 @@ func (h *HubExporter) collectState(ch chan<- prometheus.Metric) {
 			state.CableModem.DocsisVersion,
 			state.CableModem.MacAddress,
 			state.CableModem.SerialNumber,
+			state.CableModem.Status,
 		)
 
 		ch <- prometheus.MustNewConstMetric(
@@ -334,13 +328,6 @@ func (h *HubExporter) collectState(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(
 			h.descStateAccessAllowed,
 			prometheus.GaugeValue, access,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			h.descStateStatus,
-			prometheus.GaugeValue,
-			1.0,
-			state.CableModem.Status,
 		)
 
 		ch <- prometheus.MustNewConstMetric(
