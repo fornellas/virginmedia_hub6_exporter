@@ -37,27 +37,26 @@ type HubExporter struct {
 	descServiceFlowMaxConcatBurst  *prometheus.Desc
 	descServiceFlowsUp             *prometheus.Desc
 
-	// Descriptors
+	// GET http://${address}/rest/v1/cablemodem/upstream
+	descUpstreamInfo        *prometheus.Desc
+	descUpstreamFrequencyHz *prometheus.Desc
+	descUpstreamLockStatus  *prometheus.Desc
+	descUpstreamPower       *prometheus.Desc
+	descUpstreamSymbolRate  *prometheus.Desc
+	descUpstreamT1          *prometheus.Desc
+	descUpstreamT2          *prometheus.Desc
+	descUpstreamT3          *prometheus.Desc
+	descUpstreamT4          *prometheus.Desc
+	descUpstreamUp          *prometheus.Desc
+
 	// descDownstreamPower       *prometheus.Desc
 	// descDownstreamSnr         *prometheus.Desc
 	// descDownstreamRxMer       *prometheus.Desc
 	// descDownstreamCorrected   *prometheus.Desc
 	// descDownstreamUncorrected *prometheus.Desc
-	// descDownstreamLockStatus  *prometheus.Desc
 	// descDownstreamFrequencyHz *prometheus.Desc
-
-	// descUpstreamPower       *prometheus.Desc
-	// descUpstreamSymbolRate  *prometheus.Desc
-	// descUpstreamLockStatus  *prometheus.Desc
-	// descUpstreamFrequencyHz *prometheus.Desc
-	// descUpstreamT1          *prometheus.Desc
-	// descUpstreamT2          *prometheus.Desc
-	// descUpstreamT3          *prometheus.Desc
-	// descUpstreamT4          *prometheus.Desc
-
-	// Per-endpoint up metrics (1 = endpoint scraped successfully, 0 = failure)
+	// descDownstreamLockStatus  *prometheus.Desc
 	// descDownstreamUp   *prometheus.Desc
-	// descUpstreamUp     *prometheus.Desc
 
 }
 
@@ -138,6 +137,58 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 			nil, nil,
 		),
 
+		// GET http://${address}/rest/v1/cablemodem/upstream
+		descUpstreamInfo: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_info",
+			"Upstream info labels (value is always 1)",
+			[]string{"channel_id", "modulation", "channel_type"}, nil,
+		),
+		descUpstreamFrequencyHz: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_frequency_hertz",
+			"Upstream channel frequency in Hz",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamLockStatus: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_lock_status",
+			"Upstream channel lock status (1 = locked, 0 = unlocked)",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamPower: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_power_dbmv",
+			"Upstream channel power in dBmV",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamSymbolRate: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_symbol_rate_ksps",
+			"Upstream channel symbol rate in ksps",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamT1: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_t1_timeouts",
+			"Upstream channel T1 timeouts",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamT2: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_t2_timeouts",
+			"Upstream channel T2 timeouts",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamT3: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_t3_timeouts",
+			"Upstream channel T3 timeouts",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamT4: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_t4_timeouts",
+			"Upstream channel T4 timeouts",
+			[]string{"channel_id"}, nil,
+		),
+		descUpstreamUp: prometheus.NewDesc(
+			"virginmedia_hub6_upstream_up",
+			"Whether the upstream endpoint was scraped successfully (1 = up, 0 = down)",
+			nil, nil,
+		),
+
 		// descDownstreamPower: prometheus.NewDesc(
 		// 	"virginmedia_hub6_downstream_power_dbmv",
 		// 	"Downstream channel power in dBmV",
@@ -173,57 +224,9 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		// 	"Downstream channel frequency in Hz",
 		// 	labelsDS, nil,
 		// ),
-
-		// descUpstreamPower: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_power_dbmv",
-		// 	"Upstream channel power in dBmV",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamSymbolRate: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_symbol_rate_ksps",
-		// 	"Upstream channel symbol rate in ksps",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamLockStatus: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_lock_status",
-		// 	"Upstream channel lock status (1 = locked, 0 = unlocked)",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamFrequencyHz: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_frequency_hertz",
-		// 	"Upstream channel frequency in Hz",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamT1: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_t1_timeouts",
-		// 	"Upstream channel T1 timeouts",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamT2: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_t2_timeouts",
-		// 	"Upstream channel T2 timeouts",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamT3: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_t3_timeouts",
-		// 	"Upstream channel T3 timeouts",
-		// 	labelsUS, nil,
-		// ),
-		// descUpstreamT4: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_t4_timeouts",
-		// 	"Upstream channel T4 timeouts",
-		// 	labelsUS, nil,
-		// ),
-
-		// // per-endpoint up metrics
 		// descDownstreamUp: prometheus.NewDesc(
 		// 	"virginmedia_hub6_downstream_up",
 		// 	"Whether the downstream endpoint was scraped successfully (1 = up, 0 = down)",
-		// 	nil, nil,
-		// ),
-		// descUpstreamUp: prometheus.NewDesc(
-		// 	"virginmedia_hub6_upstream_up",
-		// 	"Whether the upstream endpoint was scraped successfully (1 = up, 0 = down)",
 		// 	nil, nil,
 		// ),
 	}
@@ -245,6 +248,18 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- h.descServiceFlowMinReservedRate
 	ch <- h.descServiceFlowMaxConcatBurst
 	ch <- h.descServiceFlowsUp
+
+	// GET http://${address}/rest/v1/cablemodem/upstream
+	ch <- h.descUpstreamInfo
+	ch <- h.descUpstreamFrequencyHz
+	ch <- h.descUpstreamLockStatus
+	ch <- h.descUpstreamPower
+	ch <- h.descUpstreamSymbolRate
+	ch <- h.descUpstreamT1
+	ch <- h.descUpstreamT2
+	ch <- h.descUpstreamT3
+	ch <- h.descUpstreamT4
+	ch <- h.descUpstreamUp
 
 	// ch <- h.descDownstreamPower
 	// ch <- h.descDownstreamSnr
@@ -270,7 +285,6 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 
 	// // describe per-endpoint up metrics
 	// ch <- h.descDownstreamUp
-	// ch <- h.descUpstreamUp
 
 	// ch <- h.descStateUp
 }
@@ -404,10 +418,91 @@ func (h *HubExporter) collectServiceFlows(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(h.descServiceFlowsUp, prometheus.GaugeValue, up)
 }
 
+// GET http://${address}/rest/v1/cablemodem/upstream
+func (h *HubExporter) collectUpstream(ch chan<- prometheus.Metric) {
+	logger := log.MustLogger(h.ctx)
+
+	up := 0.0
+
+	var us hub6.Upstream
+	if err := h.get("/rest/v1/cablemodem/upstream", &us); err != nil {
+		logger.Error("failed to fetch upstream", "err", err)
+	} else {
+		up = 1.0
+
+		for _, upstreamChannel := range us.UpstreamItem.Channels {
+			channelId := strconv.FormatUint(upstreamChannel.ChannelId, 10)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamInfo,
+				prometheus.GaugeValue,
+				1.0,
+				channelId,
+				upstreamChannel.Modulation,
+				upstreamChannel.ChannelType,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamFrequencyHz,
+				prometheus.GaugeValue,
+				float64(upstreamChannel.Frequency),
+				channelId,
+			)
+			lock := 0.0
+			if upstreamChannel.LockStatus {
+				lock = 1.0
+			}
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamLockStatus,
+				prometheus.GaugeValue,
+				lock,
+				channelId,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamPower,
+				prometheus.GaugeValue,
+				upstreamChannel.Power,
+				channelId,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamSymbolRate,
+				prometheus.GaugeValue,
+				float64(upstreamChannel.SymbolRate),
+				channelId,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamT1,
+				prometheus.GaugeValue,
+				float64(upstreamChannel.T1Timeout),
+				channelId,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamT2,
+				prometheus.GaugeValue,
+				float64(upstreamChannel.T2Timeout),
+				channelId,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamT3,
+				prometheus.GaugeValue,
+				float64(upstreamChannel.T3Timeout),
+				channelId,
+			)
+			ch <- prometheus.MustNewConstMetric(
+				h.descUpstreamT4,
+				prometheus.GaugeValue,
+				float64(upstreamChannel.T4Timeout),
+				channelId,
+			)
+		}
+	}
+
+	ch <- prometheus.MustNewConstMetric(h.descUpstreamUp, prometheus.GaugeValue, up)
+}
+
 // Collect fetches the current state from the Hub and exports metrics.
 func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	h.collectState(ch)
 	h.collectServiceFlows(ch)
+	h.collectUpstream(ch)
 
 	// // Downstream
 	// dsUp := 0.0
@@ -431,29 +526,6 @@ func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
 	// // emit downstream up metric
 	// ch <- prometheus.MustNewConstMetric(e.descDownstreamUp, prometheus.GaugeValue, dsUp)
 
-	// // Upstream
-	// usUp := 0.0
-	// if us, err := e.fetchUpstream(ctx); err == nil {
-	// 	usUp = 1.0
-	// 	for _, c := range us.UpstreamItem.Channels {
-	// 		labels := []string{strconv.FormatUint(c.ChannelId, 10), c.ChannelType, c.Modulation}
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamPower, prometheus.GaugeValue, c.Power, labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamSymbolRate, prometheus.GaugeValue, float64(c.SymbolRate), labels...)
-	// 		lock := 0.0
-	// 		if c.LockStatus {
-	// 			lock = 1.0
-	// 		}
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamLockStatus, prometheus.GaugeValue, lock, labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamFrequencyHz, prometheus.GaugeValue, float64(c.Frequency), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamT1, prometheus.GaugeValue, float64(c.T1Timeout), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamT2, prometheus.GaugeValue, float64(c.T2Timeout), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamT3, prometheus.GaugeValue, float64(c.T3Timeout), labels...)
-	// 		ch <- prometheus.MustNewConstMetric(e.descUpstreamT4, prometheus.GaugeValue, float64(c.T4Timeout), labels...)
-	// 	}
-	// }
-	// // emit upstream up metric
-	// ch <- prometheus.MustNewConstMetric(e.descUpstreamUp, prometheus.GaugeValue, usUp)
-
 }
 
 // func (e *HubExporter) fetchDownstream(ctx context.Context) (*hub6.Downstream, error) {
@@ -462,12 +534,4 @@ func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
 // 		return nil, err
 // 	}
 // 	return &ds, nil
-// }
-
-// func (e *HubExporter) fetchUpstream(ctx context.Context) (*hub6.Upstream, error) {
-// 	var us hub6.Upstream
-// 	if err := e.fetch(ctx, "/rest/v1/cablemodem/upstream", &us); err != nil {
-// 		return nil, err
-// 	}
-// 	return &us, nil
 // }
