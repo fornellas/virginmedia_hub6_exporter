@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -17,39 +20,78 @@ var ServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Run the Virgin Media Hub 6 Prometheus exporter HTTP server",
 	Run: GetRunFn(func(cmd *cobra.Command, args []string) error {
-		logger := log.MustLogger(cmd.Context())
+		ctx := cmd.Context()
+
+		logger := log.MustLogger(ctx)
 
 		port, err := cmd.Flags().GetInt("port")
 		if err != nil {
 			return err
 		}
 
+		timeout, err := cmd.Flags().GetDuration("http-client-timeout")
+		if err != nil {
+			return err
+		}
+
+		serveMux := http.NewServeMux()
 		// /probe implements the multi-target exporter pattern. It expects a GET
 		// parameter "target" containing the address of the Hub to probe.
-		mux := http.NewServeMux()
-		mux.HandleFunc("/probe", func(w http.ResponseWriter, r *http.Request) {
+		serveMux.HandleFunc("/probe", func(w http.ResponseWriter, r *http.Request) {
 			target := r.URL.Query().Get("target")
 			if target == "" {
 				http.Error(w, "missing 'target' parameter", http.StatusBadRequest)
 				return
 			}
 
+			ctx := r.Context()
+
+			hubExporter := exporter.NewHubExporter(ctx, target, &http.Client{Timeout: timeout})
+
 			registry := prometheus.NewRegistry()
-			hubExporter := exporter.NewHubExporter(target, 5*time.Second)
 			registry.MustRegister(hubExporter)
 
 			handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 			handler.ServeHTTP(w, r)
 		})
 
-		listen := fmt.Sprintf(":%d", port)
-		logger.Info("Starting server", "listen", listen)
-		return http.ListenAndServe(listen, mux)
+		address := fmt.Sprintf(":%d", port)
+		server := &http.Server{
+			Addr: address,
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ctx, logger := log.MustWithAttrs(
+					r.Context(),
+					"method", r.Method,
+					"url", r.URL,
+					"proto", r.Proto,
+					"host", r.Host,
+					"remote_addr", r.RemoteAddr,
+				)
+				logger.Info("Serving request")
+				serveMux.ServeHTTP(w, r.Clone(ctx))
+			}),
+			ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
+			BaseContext: func(listener net.Listener) context.Context {
+				listenerCtx, _ := log.MustWithAttrs(ctx, "address", listener.Addr())
+				return listenerCtx
+			},
+			ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+				connCtx, _ := log.MustWithAttrs(
+					ctx,
+					"local_address", c.LocalAddr(),
+					"remote_address", c.RemoteAddr(),
+				)
+				return connCtx
+			},
+		}
+		logger.Info("Starting server", "address", address)
+		return server.ListenAndServe()
 	}),
 }
 
 func init() {
 	ServerCmd.Flags().Int("port", 9188, "HTTP listen port for the exporter")
+	ServerCmd.Flags().Duration("http-client-timeout", 5*time.Second, "HTTP client timeount")
 
 	RootCmd.AddCommand(ServerCmd)
 }
