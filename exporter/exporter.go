@@ -30,6 +30,7 @@ type HubExporter struct {
 	descStateUp                     *prometheus.Desc
 
 	// GET http://${address}/rest/v1/cablemodem/serviceflows
+	descServiceFlowInfo            *prometheus.Desc
 	descServiceFlowMaxTrafficRate  *prometheus.Desc
 	descServiceFlowMaxTrafficBurst *prometheus.Desc
 	descServiceFlowMinReservedRate *prometheus.Desc
@@ -65,9 +66,8 @@ type HubExporter struct {
 func NewHubExporter(ctx context.Context, address string, client *http.Client) *HubExporter {
 	ctx, _ = log.MustWithAttrs(ctx, "virgin_media_hub_address", address)
 
+	// upstreamLabels := []string{"channel_id", "channel_type", "modulation"}
 	// labelsDS := []string{"channel_id", "channel_type", "modulation"}
-	// labelsUS := []string{"channel_id", "channel_type", "modulation"}
-	serviceFlowLabels := []string{"serviceflow_id", "direction", "schedule_type"}
 
 	return &HubExporter{
 		ctx:     ctx,
@@ -107,25 +107,30 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		),
 
 		// GET http://${address}/rest/v1/cablemodem/serviceflows
+		descServiceFlowInfo: prometheus.NewDesc(
+			"virginmedia_hub6_serviceflow_info",
+			"ServiceFlow info labels (value is always 1)",
+			[]string{"serviceflow_id", "direction", "schedule_type"}, nil,
+		),
 		descServiceFlowMaxTrafficRate: prometheus.NewDesc(
 			"virginmedia_hub6_serviceflow_max_traffic_rate_bps",
 			"ServiceFlow max traffic rate in bps",
-			serviceFlowLabels, nil,
+			[]string{"serviceflow_id"}, nil,
 		),
 		descServiceFlowMaxTrafficBurst: prometheus.NewDesc(
 			"virginmedia_hub6_serviceflow_max_traffic_burst_bytes",
 			"ServiceFlow max traffic burst in bytes",
-			serviceFlowLabels, nil,
+			[]string{"serviceflow_id"}, nil,
 		),
 		descServiceFlowMinReservedRate: prometheus.NewDesc(
 			"virginmedia_hub6_serviceflow_min_reserved_rate_bps",
 			"ServiceFlow min reserved rate in bps",
-			serviceFlowLabels, nil,
+			[]string{"serviceflow_id"}, nil,
 		),
 		descServiceFlowMaxConcatBurst: prometheus.NewDesc(
 			"virginmedia_hub6_serviceflow_max_concatenated_burst_bytes",
 			"ServiceFlow max concatenated burst in bytes",
-			serviceFlowLabels, nil,
+			[]string{"serviceflow_id"}, nil,
 		),
 		descServiceFlowsUp: prometheus.NewDesc(
 			"virginmedia_hub6_serviceflows_up",
@@ -234,6 +239,7 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- h.descStateBaselinePrivacyEnabled
 
 	// GET http://${address}/rest/v1/cablemodem/serviceflows
+	ch <- h.descServiceFlowInfo
 	ch <- h.descServiceFlowMaxTrafficRate
 	ch <- h.descServiceFlowMaxTrafficBurst
 	ch <- h.descServiceFlowMinReservedRate
@@ -359,30 +365,38 @@ func (h *HubExporter) collectServiceFlows(ch chan<- prometheus.Metric) {
 		up = 1.0
 
 		for _, serviceFlowItem := range serviceFlows.ServiceFlowItems {
-			labels := []string{strconv.FormatUint(serviceFlowItem.ServiceFlow.ServiceFlowId, 10), serviceFlowItem.ServiceFlow.Direction, serviceFlowItem.ServiceFlow.ScheduleType}
+			serviceFlowId := strconv.FormatUint(serviceFlowItem.ServiceFlow.ServiceFlowId, 10)
+			ch <- prometheus.MustNewConstMetric(
+				h.descServiceFlowInfo,
+				prometheus.GaugeValue,
+				1.0,
+				serviceFlowId,
+				serviceFlowItem.ServiceFlow.Direction,
+				serviceFlowItem.ServiceFlow.ScheduleType,
+			)
 			ch <- prometheus.MustNewConstMetric(
 				h.descServiceFlowMaxTrafficRate,
 				prometheus.GaugeValue,
 				float64(serviceFlowItem.ServiceFlow.MaxTrafficRate),
-				labels...,
+				serviceFlowId,
 			)
 			ch <- prometheus.MustNewConstMetric(
 				h.descServiceFlowMaxTrafficBurst,
 				prometheus.GaugeValue,
 				float64(serviceFlowItem.ServiceFlow.MaxTrafficBurst),
-				labels...,
+				serviceFlowId,
 			)
 			ch <- prometheus.MustNewConstMetric(
 				h.descServiceFlowMinReservedRate,
 				prometheus.GaugeValue,
 				float64(serviceFlowItem.ServiceFlow.MinReservedRate),
-				labels...,
+				serviceFlowId,
 			)
 			ch <- prometheus.MustNewConstMetric(
 				h.descServiceFlowMaxConcatBurst,
 				prometheus.GaugeValue,
 				float64(serviceFlowItem.ServiceFlow.MaxConcatenatedBurst),
-				labels...,
+				serviceFlowId,
 			)
 		}
 	}
