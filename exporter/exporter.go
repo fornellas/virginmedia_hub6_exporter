@@ -356,6 +356,8 @@ func (h *HubExporter) collectServiceFlows(ch chan<- prometheus.Metric) {
 	if err := h.get("/rest/v1/cablemodem/serviceflows", &serviceFlows); err != nil {
 		logger.Error("failed to fetch service flows", "err", err)
 	} else {
+		up = 1.0
+
 		for _, serviceFlowItem := range serviceFlows.ServiceFlowItems {
 			labels := []string{strconv.FormatUint(serviceFlowItem.ServiceFlow.ServiceFlowId, 10), serviceFlowItem.ServiceFlow.Direction, serviceFlowItem.ServiceFlow.ScheduleType}
 			ch <- prometheus.MustNewConstMetric(
