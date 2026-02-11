@@ -38,16 +38,15 @@ type HubExporter struct {
 	descServiceFlowsUp             *prometheus.Desc
 
 	// GET http://${address}/rest/v1/cablemodem/upstream
-	descUpstreamInfo        *prometheus.Desc
-	descUpstreamFrequencyHz *prometheus.Desc
-	descUpstreamLockStatus  *prometheus.Desc
-	descUpstreamPower       *prometheus.Desc
-	descUpstreamSymbolRate  *prometheus.Desc
-	descUpstreamT1          *prometheus.Desc
-	descUpstreamT2          *prometheus.Desc
-	descUpstreamT3          *prometheus.Desc
-	descUpstreamT4          *prometheus.Desc
-	descUpstreamUp          *prometheus.Desc
+	descUpstreamInfo       *prometheus.Desc
+	descUpstreamLockStatus *prometheus.Desc
+	descUpstreamPower      *prometheus.Desc
+	descUpstreamSymbolRate *prometheus.Desc
+	descUpstreamT1         *prometheus.Desc
+	descUpstreamT2         *prometheus.Desc
+	descUpstreamT3         *prometheus.Desc
+	descUpstreamT4         *prometheus.Desc
+	descUpstreamUp         *prometheus.Desc
 
 	// GET http://${address}/rest/v1/cablemodem/downstream
 	descDownstreamInfo                      *prometheus.Desc
@@ -142,12 +141,7 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		descUpstreamInfo: prometheus.NewDesc(
 			"virginmedia_hub6_upstream_info",
 			"Upstream info labels (value is always 1)",
-			[]string{"channel_id", "modulation", "channel_type"}, nil,
-		),
-		descUpstreamFrequencyHz: prometheus.NewDesc(
-			"virginmedia_hub6_upstream_frequency_hertz",
-			"Upstream channel frequency in Hz",
-			[]string{"channel_id"}, nil,
+			[]string{"channel_id", "modulation", "channel_type", "frequency_hz"}, nil,
 		),
 		descUpstreamLockStatus: prometheus.NewDesc(
 			"virginmedia_hub6_upstream_lock_status",
@@ -273,7 +267,6 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 
 	// GET http://${address}/rest/v1/cablemodem/upstream
 	ch <- h.descUpstreamInfo
-	ch <- h.descUpstreamFrequencyHz
 	ch <- h.descUpstreamLockStatus
 	ch <- h.descUpstreamPower
 	ch <- h.descUpstreamSymbolRate
@@ -451,12 +444,7 @@ func (h *HubExporter) collectUpstream(ch chan<- prometheus.Metric) {
 				channelId,
 				upstreamChannel.Modulation,
 				upstreamChannel.ChannelType,
-			)
-			ch <- prometheus.MustNewConstMetric(
-				h.descUpstreamFrequencyHz,
-				prometheus.GaugeValue,
-				float64(upstreamChannel.Frequency),
-				channelId,
+				strconv.FormatUint(upstreamChannel.Frequency, 10),
 			)
 			lock := 0.0
 			if upstreamChannel.LockStatus {
