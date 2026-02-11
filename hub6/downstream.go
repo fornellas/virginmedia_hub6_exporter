@@ -6,7 +6,7 @@ type DownstreamChannel struct {
 	// Channel ID
 	ChannelId uint64 `json:"channelId"`
 	// Channel Width (Hz)
-	ChannelWidth uint64 `json:"channelWidth"`
+	ChannelWidth *uint64 `json:"channelWidth"`
 	// FFT Type
 	FFTType string `json:"fftType"`
 	// Number of Active Subcarriers

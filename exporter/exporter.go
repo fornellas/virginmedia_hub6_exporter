@@ -520,12 +520,14 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 				downstreamChannel.FFTType,
 				downstreamChannel.Modulation,
 			)
-			ch <- prometheus.MustNewConstMetric(
-				h.descDownstreamChannelWidth,
-				prometheus.GaugeValue,
-				float64(downstreamChannel.ChannelWidth),
-				channelId,
-			)
+			if downstreamChannel.ChannelWidth != nil {
+				ch <- prometheus.MustNewConstMetric(
+					h.descDownstreamChannelWidth,
+					prometheus.GaugeValue,
+					float64(*downstreamChannel.ChannelWidth),
+					channelId,
+				)
+			}
 			ch <- prometheus.MustNewConstMetric(
 				h.descDownstreamNumberOfActiveSubcarriers,
 				prometheus.GaugeValue,
