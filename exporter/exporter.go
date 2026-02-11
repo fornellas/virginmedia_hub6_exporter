@@ -50,11 +50,8 @@ type HubExporter struct {
 
 	// GET http://${address}/rest/v1/cablemodem/downstream
 	descDownstreamInfo                      *prometheus.Desc
-	descDownstreamChannelWidth              *prometheus.Desc
 	descDownstreamNumberOfActiveSubcarriers *prometheus.Desc
-	descDownstreamFrequency                 *prometheus.Desc
 	descDownstreamPower                     *prometheus.Desc
-	descDownstreamFirstActiveSubcarrier     *prometheus.Desc
 	descDownstreamSnr                       *prometheus.Desc
 	descDownstreamRxMer                     *prometheus.Desc
 	descDownstreamCorrectedErrors           *prometheus.Desc
@@ -188,31 +185,24 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		descDownstreamInfo: prometheus.NewDesc(
 			"virginmedia_hub6_downstream_info",
 			"Downstream info labels (value is always 1)",
-			[]string{"channel_type", "channel_id", "fft_type", "modulation"}, nil,
-		),
-		descDownstreamChannelWidth: prometheus.NewDesc(
-			"virginmedia_hub6_downstream_channel_width_hz",
-			"Downstream channel width in Hz",
-			[]string{"channel_id"}, nil,
+			[]string{
+				"channel_type",
+				"channel_id",
+				"fft_type",
+				"modulation",
+				"channel_width_hz",
+				"frequency_hz",
+				"first_active_subcarrier_hz",
+			}, nil,
 		),
 		descDownstreamNumberOfActiveSubcarriers: prometheus.NewDesc(
 			"virginmedia_hub6_downstream_number_of_active_subcarriers",
 			"Downstream number of active subcarriers",
 			[]string{"channel_id"}, nil,
 		),
-		descDownstreamFrequency: prometheus.NewDesc(
-			"virginmedia_hub6_downstream_frequency_hertz",
-			"Downstream channel frequency in Hz",
-			[]string{"channel_id"}, nil,
-		),
 		descDownstreamPower: prometheus.NewDesc(
 			"virginmedia_hub6_downstream_power_dbmv",
 			"Downstream channel power in dBmV",
-			[]string{"channel_id"}, nil,
-		),
-		descDownstreamFirstActiveSubcarrier: prometheus.NewDesc(
-			"virginmedia_hub6_downstream_first_active_subcarrier_hz",
-			"Downstream first active subcarrier in Hz",
 			[]string{"channel_id"}, nil,
 		),
 		descDownstreamSnr: prometheus.NewDesc(
@@ -278,11 +268,8 @@ func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
 
 	// GET http://${address}/rest/v1/cablemodem/downstream
 	ch <- h.descDownstreamInfo
-	ch <- h.descDownstreamChannelWidth
 	ch <- h.descDownstreamNumberOfActiveSubcarriers
-	ch <- h.descDownstreamFrequency
 	ch <- h.descDownstreamPower
-	ch <- h.descDownstreamFirstActiveSubcarrier
 	ch <- h.descDownstreamSnr
 	ch <- h.descDownstreamRxMer
 	ch <- h.descDownstreamCorrectedErrors
@@ -511,6 +498,14 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 		up = 1.0
 		for _, downstreamChannel := range downstream.DownstreamItem.DownstreamChannels {
 			channelId := strconv.FormatUint(downstreamChannel.ChannelId, 10)
+			channelWidthHz := "N/A"
+			if downstreamChannel.ChannelWidth != nil {
+				channelWidthHz = strconv.FormatUint(*downstreamChannel.ChannelWidth, 10)
+			}
+			firstActiveSubcarrierHz := "N/A"
+			if downstreamChannel.FirstActiveSubcarrier != nil {
+				firstActiveSubcarrierHz = strconv.FormatUint(*downstreamChannel.FirstActiveSubcarrier, 10)
+			}
 			ch <- prometheus.MustNewConstMetric(
 				h.descDownstreamInfo,
 				prometheus.GaugeValue,
@@ -519,15 +514,10 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 				channelId,
 				downstreamChannel.FFTType,
 				downstreamChannel.Modulation,
+				channelWidthHz,
+				strconv.FormatUint(downstreamChannel.Frequency, 10),
+				firstActiveSubcarrierHz,
 			)
-			if downstreamChannel.ChannelWidth != nil {
-				ch <- prometheus.MustNewConstMetric(
-					h.descDownstreamChannelWidth,
-					prometheus.GaugeValue,
-					float64(*downstreamChannel.ChannelWidth),
-					channelId,
-				)
-			}
 			if downstreamChannel.NumberOfActiveSubcarriers != nil {
 				ch <- prometheus.MustNewConstMetric(
 					h.descDownstreamNumberOfActiveSubcarriers,
@@ -537,25 +527,11 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 				)
 			}
 			ch <- prometheus.MustNewConstMetric(
-				h.descDownstreamFrequency,
-				prometheus.GaugeValue,
-				float64(downstreamChannel.Frequency),
-				channelId,
-			)
-			ch <- prometheus.MustNewConstMetric(
 				h.descDownstreamPower,
 				prometheus.GaugeValue,
 				downstreamChannel.Power,
 				channelId,
 			)
-			if downstreamChannel.FirstActiveSubcarrier != nil {
-				ch <- prometheus.MustNewConstMetric(
-					h.descDownstreamFirstActiveSubcarrier,
-					prometheus.GaugeValue,
-					float64(*downstreamChannel.FirstActiveSubcarrier),
-					channelId,
-				)
-			}
 			ch <- prometheus.MustNewConstMetric(
 				h.descDownstreamSnr,
 				prometheus.GaugeValue,
