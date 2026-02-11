@@ -10,7 +10,7 @@ type DownstreamChannel struct {
 	// FFT Type
 	FFTType string `json:"fftType"`
 	// Number of Active Subcarriers
-	NumberOfActiveSubcarriers uint64 `json:"numberOfActiveSubCarriers"`
+	NumberOfActiveSubcarriers *uint64 `json:"numberOfActiveSubCarriers"`
 	// Frequency (Hz)
 	Frequency uint64 `json:"frequency"`
 	// Power (dBmV)
@@ -18,7 +18,7 @@ type DownstreamChannel struct {
 	// Modulation
 	Modulation string `json:"modulation"`
 	// First Active Subcarrier (Hz)
-	FirstActiveSubcarrier uint64 `json:"firstActiveSubcarrier"`
+	FirstActiveSubcarrier *uint64 `json:"firstActiveSubcarrier"`
 	// SNR (dB)
 	Snr uint64 `json:"snr"`
 	// RxMER (dB)

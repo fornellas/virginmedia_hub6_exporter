@@ -528,12 +528,14 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 					channelId,
 				)
 			}
-			ch <- prometheus.MustNewConstMetric(
-				h.descDownstreamNumberOfActiveSubcarriers,
-				prometheus.GaugeValue,
-				float64(downstreamChannel.NumberOfActiveSubcarriers),
-				channelId,
-			)
+			if downstreamChannel.NumberOfActiveSubcarriers != nil {
+				ch <- prometheus.MustNewConstMetric(
+					h.descDownstreamNumberOfActiveSubcarriers,
+					prometheus.GaugeValue,
+					float64(*downstreamChannel.NumberOfActiveSubcarriers),
+					channelId,
+				)
+			}
 			ch <- prometheus.MustNewConstMetric(
 				h.descDownstreamFrequency,
 				prometheus.GaugeValue,
@@ -546,13 +548,14 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 				downstreamChannel.Power,
 				channelId,
 			)
-			// descDownstreamFirstActiveSubcarrier
-			ch <- prometheus.MustNewConstMetric(
-				h.descDownstreamFirstActiveSubcarrier,
-				prometheus.GaugeValue,
-				float64(downstreamChannel.FirstActiveSubcarrier),
-				channelId,
-			)
+			if downstreamChannel.FirstActiveSubcarrier != nil {
+				ch <- prometheus.MustNewConstMetric(
+					h.descDownstreamFirstActiveSubcarrier,
+					prometheus.GaugeValue,
+					float64(*downstreamChannel.FirstActiveSubcarrier),
+					channelId,
+				)
+			}
 			ch <- prometheus.MustNewConstMetric(
 				h.descDownstreamSnr,
 				prometheus.GaugeValue,
