@@ -498,6 +498,10 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 		up = 1.0
 		for _, downstreamChannel := range downstream.DownstreamItem.DownstreamChannels {
 			channelId := strconv.FormatUint(downstreamChannel.ChannelId, 10)
+			fftType := "N/A"
+			if downstreamChannel.FFTType != nil {
+				fftType = *downstreamChannel.FFTType
+			}
 			channelWidthHz := "N/A"
 			if downstreamChannel.ChannelWidth != nil {
 				channelWidthHz = strconv.FormatUint(*downstreamChannel.ChannelWidth, 10)
@@ -512,7 +516,7 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 				1.0,
 				downstreamChannel.ChannelType,
 				channelId,
-				downstreamChannel.FFTType,
+				fftType,
 				downstreamChannel.Modulation,
 				channelWidthHz,
 				strconv.FormatUint(downstreamChannel.Frequency, 10),
