@@ -1,3 +1,5 @@
+http://${address}/rest/v1/system/info_
+http://${address}/rest/v1/cablemodem/state_
 http://${address}/rest/v1/cablemodem/state_
 http://${address}/rest/v1/cablemodem/serviceflows
 http://${address}/rest/v1/cablemodem/upstream
