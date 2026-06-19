@@ -21,6 +21,10 @@ type HubExporter struct {
 	address string
 	client  *http.Client
 
+	// GET http://${address}/rest/v1/system/info_
+	descInfo   *prometheus.Desc
+	descInfoUp *prometheus.Desc
+
 	// GET http://${address}/rest/v1/cablemodem/state_
 	descStateInfo                   *prometheus.Desc
 	descStateUptime                 *prometheus.Desc
@@ -69,6 +73,18 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 		ctx:     ctx,
 		address: address,
 		client:  client,
+
+		// GET http://${address}/rest/v1/system/info_
+		descInfo: prometheus.NewDesc(
+			"virginmedia_hub6_info",
+			"Info labels (value is always 1)",
+			[]string{"hardware_version", "software_version"}, nil,
+		),
+		descInfoUp: prometheus.NewDesc(
+			"virginmedia_hub6_info_up",
+			"Whether the info endpoint was scraped successfully (1 = up, 0 = down)",
+			nil, nil,
+		),
 
 		// GET http://${address}/rest/v1/cablemodem/state_
 		descStateInfo: prometheus.NewDesc(
@@ -240,6 +256,8 @@ func NewHubExporter(ctx context.Context, address string, client *http.Client) *H
 
 // Describe sends the descriptors of each metric over the provided channel.
 func (h *HubExporter) Describe(ch chan<- *prometheus.Desc) {
+	// GET http://${address}/rest/v1/system/info_
+	ch <- h.descInfo
 	// GET http://${address}/rest/v1/cablemodem/state_
 	ch <- h.descStateInfo
 	ch <- h.descStateUptime
@@ -301,6 +319,31 @@ func (h *HubExporter) get(path string, out any) (err error) {
 	dec := json.NewDecoder(resp.Body)
 	dec.DisallowUnknownFields()
 	return dec.Decode(out)
+}
+
+// GET http://${address}/rest/v1/system/info_
+func (h *HubExporter) collectInfo(ch chan<- prometheus.Metric) {
+	logger := log.MustLogger(h.ctx)
+
+	up := 0.0
+
+	var info hub6.Info
+	path := "/rest/v1/system/info_"
+	if err := h.get(path, &info); err != nil {
+		logger.Error("failed to fetch info", "err", err)
+	} else {
+		up = 1.0
+
+		ch <- prometheus.MustNewConstMetric(
+			h.descInfo,
+			prometheus.GaugeValue,
+			1.0,
+			info.InfoData.HardwareVersion,
+			info.InfoData.SoftwareVersion,
+		)
+	}
+
+	ch <- prometheus.MustNewConstMetric(h.descInfoUp, prometheus.GaugeValue, up)
 }
 
 // GET http://${address}/rest/v1/cablemodem/state_
@@ -578,6 +621,7 @@ func (h *HubExporter) collectDownstream(ch chan<- prometheus.Metric) {
 
 // Collect fetches the current state from the Hub and exports metrics.
 func (h *HubExporter) Collect(ch chan<- prometheus.Metric) {
+	h.collectInfo(ch)
 	h.collectState(ch)
 	h.collectServiceFlows(ch)
 	h.collectUpstream(ch)
