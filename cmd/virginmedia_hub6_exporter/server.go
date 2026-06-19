@@ -89,7 +89,7 @@ var ServerCmd = &cobra.Command{
 
 func init() {
 	ServerCmd.Flags().String("listen-address", ":9188", "HTTP listen port for the exporter")
-	ServerCmd.Flags().Duration("http-client-timeout", 5*time.Second, "HTTP client timeount")
+	ServerCmd.Flags().Duration("http-client-timeout", 10*time.Second, "HTTP client timeount")
 
 	RootCmd.AddCommand(ServerCmd)
 }
